@@ -88,6 +88,7 @@
   button.dl { width: 100%; margin-top: 14px; padding: 13px 0; border: none; border-radius: 10px;
           background: var(--accent); color: var(--accent-ink); font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
   button.dl:disabled { opacity: .35; cursor: default; }
+  button.dl.share { background: transparent; color: var(--ink); border: 1.5px solid var(--line); margin-top: 8px; }
   .hint { font-size: 12px; color: var(--sub); margin-top: 10px; }
   .prev { width: 100%; border-radius: 10px; border: 1px solid var(--line); display: block; background: #fff; touch-action: none; }
   .prevbox { position: relative; }
@@ -151,6 +152,7 @@
           <label>輸出檔名</label>
           <input type="text" id="n3" value="">
           <button class="dl" id="d3" disabled>下載 JPG（2160×3840）</button>
+          <button class="dl share" id="d3s" disabled style="display:none">存到相簿</button>
         </div>
       </div>
     </div>
@@ -173,6 +175,7 @@
           <label>鏡頭</label><input type="text" id="tLens" value="">
           <label>參數列</label><input type="text" id="tParams" value="">
           <button class="dl" id="dS" disabled>下載 JPG（2160×3840）</button>
+          <button class="dl share" id="dSs" disabled style="display:none">存到相簿</button>
           <div class="hint" id="hS">相機・快門・光圈・ISO 從 EXIF 自動帶入，可直接改字。批次時每張用自己的 EXIF，標題共用。</div>
         </div>
       </div>
@@ -206,6 +209,7 @@
             <span class="seg" data-n="6">6</span>
           </div>
           <button class="dl" id="dC" disabled>下載輪播 JPG</button>
+          <button class="dl share" id="dCs" disabled style="display:none">全部存到相簿</button>
           <div class="hint">預覽上拖動可調整構圖。虛線是切割位置（不會出現在成品）。下載會逐張輸出，發文時照編號順序上傳即可無縫接圖。</div>
         </div>
       </div>
@@ -234,6 +238,7 @@
           <label>張號</label><input type="text" id="fFrame" value="">
           <label>參數（橘色邊印）</label><input type="text" id="fParams" value="">
           <button class="dl" id="dF" disabled>下載 JPG</button>
+          <button class="dl share" id="dFs" disabled style="display:none">存到相簿</button>
           <div class="hint">張號自動取檔名數字、參數自動讀 EXIF，都可以改字。</div>
         </div>
       </div>
@@ -275,6 +280,7 @@
           </div>
           <label>參數行</label><input type="text" id="oParams" value="">
           <button class="dl" id="dO" disabled>下載 JPG</button>
+          <button class="dl share" id="dOs" disabled style="display:none">存到相簿</button>
           <div class="hint">焦段・光圈・快門・ISO・品牌 從 EXIF 自動帶入。批次時每張用自己的 EXIF。</div>
         </div>
       </div>
@@ -339,6 +345,16 @@ function download(canvas,name){
     document.body.appendChild(a); a.click();
     setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();res();},600);
   },'image/jpeg',1.0));
+}
+// 存到相簿（Web Share API，iOS/Android 分享面板 → 儲存影像）
+let canShareFiles=false;
+try{
+  canShareFiles = !!navigator.canShare && navigator.canShare({files:[new File([new Blob(['x'],{type:'image/jpeg'})],'t.jpg',{type:'image/jpeg'})]});
+}catch(e){}
+function blobOf(canvas){ return new Promise(res=>canvas.toBlob(res,'image/jpeg',1.0)); }
+async function shareFiles(files){
+  try{ await navigator.share({files}); }
+  catch(e){ /* 使用者取消分享時靜默 */ }
 }
 function bindDrop(el, input, onFiles){
   el.addEventListener('click',()=>input.click());
@@ -558,7 +574,7 @@ function draw3(final){
   });
   if(wm.area==='canvas') drawWatermark(cx3,{x:0,y:0,w:2160,h:3840});
   $('cv3empty').style.display=st3.imgs.some(Boolean)?'none':'flex';
-  $('d3').disabled=!(st3.imgs[0]&&st3.imgs[1]&&st3.imgs[2]);
+  $('d3').disabled=!(st3.imgs[0]&&st3.imgs[1]&&st3.imgs[2]); $('d3s').disabled=$('d3').disabled;
 }
 async function set3(idx,file){
   const slot=$('s3-'+idx); slot.textContent='載入中…';
@@ -629,8 +645,8 @@ const cvS=$('cvS'), cxS=cvS.getContext('2d');
 
 function drawS(final){
   cxS.fillStyle=SS.bg; cxS.fillRect(0,0,SS.W,SS.H);
-  if(!stS.img){ $('cvSempty').style.display='flex'; $('dS').disabled=true; return; }
-  $('cvSempty').style.display='none'; $('dS').disabled=false;
+  if(!stS.img){ $('cvSempty').style.display='flex'; $('dS').disabled=true; $('dSs').disabled=$('dS').disabled; return; }
+  $('cvSempty').style.display='none'; $('dS').disabled=false; $('dSs').disabled=$('dS').disabled;
   const im=stS.img;
   const s=Math.min(SS.maxW/im.width, SS.maxH/im.height);
   const pw=Math.round(im.width*s), ph=Math.round(im.height*s);
@@ -703,8 +719,8 @@ function drawO(final){
   const {S,W,H,k,maxW,maxH}=soLayout();
   if(cvO.width!==W||cvO.height!==H){ cvO.width=W; cvO.height=H; }
   cxO.fillStyle=SO.bg; cxO.fillRect(0,0,W,H);
-  if(!stO.img){ $('cvOempty').style.display='flex'; $('dO').disabled=true; return; }
-  $('cvOempty').style.display='none'; $('dO').disabled=false;
+  if(!stO.img){ $('cvOempty').style.display='flex'; $('dO').disabled=true; $('dOs').disabled=$('dO').disabled; return; }
+  $('cvOempty').style.display='none'; $('dO').disabled=false; $('dOs').disabled=$('dO').disabled;
   const im=stO.img;
   const s=Math.min(maxW/im.width, maxH/im.height);
   const pw=Math.round(im.width*s), ph=Math.round(im.height*s);
@@ -804,8 +820,8 @@ function drawC(final){
   const {sw,sh,n,W,H}=cLayout();
   if(cvC.width!==W||cvC.height!==H){ cvC.width=W; cvC.height=H; }
   cxC.fillStyle='#ffffff'; cxC.fillRect(0,0,W,H);
-  if(!stC.img){ $('cvCempty').style.display='flex'; $('dC').disabled=true; return; }
-  $('cvCempty').style.display='none'; $('dC').disabled=false;
+  if(!stC.img){ $('cvCempty').style.display='flex'; $('dC').disabled=true; $('dCs').disabled=$('dC').disabled; return; }
+  $('cvCempty').style.display='none'; $('dC').disabled=false; $('dCs').disabled=$('dC').disabled;
   const im=stC.img;
   const s=Math.max(W/im.width, H/im.height);
   const dw=im.width*s, dh=im.height*s;
@@ -882,8 +898,8 @@ function drawF(final){
   const S=2, W=stF.W*S, H=stF.H*S, k=stF.W/1080;
   if(cvF.width!==W||cvF.height!==H){ cvF.width=W; cvF.height=H; }
   cxF.fillStyle=SF.bg; cxF.fillRect(0,0,W,H);
-  if(!stF.img){ $('cvFempty').style.display='flex'; $('dF').disabled=true; return; }
-  $('cvFempty').style.display='none'; $('dF').disabled=false;
+  if(!stF.img){ $('cvFempty').style.display='flex'; $('dF').disabled=true; $('dFs').disabled=$('dF').disabled; return; }
+  $('cvFempty').style.display='none'; $('dF').disabled=false; $('dFs').disabled=$('dF').disabled;
   const im=stF.img;
   const band=SF.band*S*k, textBand=SF.textBand*S*k;
   const maxPH=H-2*band-2*textBand-40*S*k;
@@ -954,6 +970,44 @@ $('dF').addEventListener('click',async()=>{
   drawF(false);
 });
 
+/* ================= 存到相簿（分享面板） ================= */
+async function canvasFile(canvas,name){ return new File([await blobOf(canvas)],name,{type:'image/jpeg'}); }
+$('d3s').addEventListener('click',async()=>{
+  draw3(true); const f=await canvasFile(cv3,($('n3').value||'three-'+today())+'.jpg'); draw3(false);
+  await shareFiles([f]);
+});
+$('dSs').addEventListener('click',async()=>{
+  const files=[];
+  if(stS.batch.length>1){ for(const b of stS.batch){ await setS(b); drawS(true); files.push(await canvasFile(cvS,b.name.replace(/\.[^.]+$/,'')+'-story.jpg')); } }
+  else { drawS(true); files.push(await canvasFile(cvS,(stS.name||'photo')+'-story.jpg')); }
+  drawS(false); await shareFiles(files);
+});
+$('dOs').addEventListener('click',async()=>{
+  const nm=n=>n+'-shoton-'+stO.W+'x'+stO.H+'.jpg';
+  const files=[];
+  if(stO.batch.length>1){ for(const b of stO.batch){ await setO(b); drawO(true); files.push(await canvasFile(cvO,nm(b.name.replace(/\.[^.]+$/,'')))); } }
+  else { drawO(true); files.push(await canvasFile(cvO,nm(stO.name||'photo'))); }
+  drawO(false); await shareFiles(files);
+});
+$('dCs').addEventListener('click',async()=>{
+  const {sw,sh,n}=cLayout();
+  drawC(true);
+  const tmp=document.createElement('canvas'); tmp.width=sw; tmp.height=sh;
+  const tx=tmp.getContext('2d');
+  const files=[];
+  for(let i=0;i<n;i++){
+    tx.fillStyle='#fff'; tx.fillRect(0,0,sw,sh);
+    tx.drawImage(cvC,-i*sw,0);
+    sharpenRegion(tx,0,0,sw,sh);
+    files.push(await canvasFile(tmp,(stC.name||'photo')+'-carousel-'+(i+1)+'of'+n+'.jpg'));
+  }
+  drawC(false); await shareFiles(files);
+});
+$('dFs').addEventListener('click',async()=>{
+  drawF(true); const f=await canvasFile(cvF,(stF.name||'photo')+'-film-'+stF.W+'x'+stF.H+'.jpg'); drawF(false);
+  await shareFiles([f]);
+});
+
 /* ================= 啟動：載入記住的設定 ================= */
 (async function init(){
   const s=store.load();
@@ -965,6 +1019,7 @@ $('dF').addEventListener('click',async()=>{
     if(s.film.W){ stF.W=s.film.W; stF.H=s.film.H;
       document.querySelectorAll('#fSizeSegs .seg').forEach(x=>x.classList.toggle('on',+x.dataset.w===stF.W&&+x.dataset.h===stF.H)); } }
   dsSyncUI();
+  if(canShareFiles) ['d3s','dSs','dOs','dCs','dFs'].forEach(id=>$(id).style.display='block');
   if(s.wm){
     Object.assign(wm,{on:s.wm.on,anchor:s.wm.anchor??8,dx:s.wm.dx??0,dy:s.wm.dy??0,scale:s.wm.scale??18,opacity:s.wm.opacity??90,area:s.wm.area||'photo',dataURL:s.wm.dataURL||null});
     if(wm.dataURL){
