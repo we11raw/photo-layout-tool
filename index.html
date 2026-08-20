@@ -102,6 +102,16 @@
         <div class="tn">Shot on</div>
         <div class="td">白底＋Shot on 型號＋焦段光圈快門 ISO</div>
       </div>
+      <div class="tcard" data-go="carousel">
+        <svg viewBox="0 0 120 213"><rect width="120" height="213" fill="#fff"/><rect x="4" y="66" width="112" height="80" fill="#7da88b"/><line x1="42" y1="66" x2="42" y2="146" stroke="#fff" stroke-width="2.5" stroke-dasharray="5,4"/><line x1="79" y1="66" x2="79" y2="146" stroke="#fff" stroke-width="2.5" stroke-dasharray="5,4"/></svg>
+        <div class="tn">無縫輪播</div>
+        <div class="td">一張寬圖切成多張，IG 滑動無縫接圖</div>
+      </div>
+      <div class="tcard" data-go="film">
+        <svg viewBox="0 0 120 213"><rect width="120" height="213" fill="#111"/><rect x="4" y="80" width="112" height="56" fill="#8b7f6d"/><g fill="#f2f0e8"><rect x="8" y="68" width="8" height="6" rx="1.5"/><rect x="24" y="68" width="8" height="6" rx="1.5"/><rect x="40" y="68" width="8" height="6" rx="1.5"/><rect x="56" y="68" width="8" height="6" rx="1.5"/><rect x="72" y="68" width="8" height="6" rx="1.5"/><rect x="88" y="68" width="8" height="6" rx="1.5"/><rect x="104" y="68" width="8" height="6" rx="1.5"/><rect x="8" y="141" width="8" height="6" rx="1.5"/><rect x="24" y="141" width="8" height="6" rx="1.5"/><rect x="40" y="141" width="8" height="6" rx="1.5"/><rect x="56" y="141" width="8" height="6" rx="1.5"/><rect x="72" y="141" width="8" height="6" rx="1.5"/><rect x="88" y="141" width="8" height="6" rx="1.5"/><rect x="104" y="141" width="8" height="6" rx="1.5"/></g><text x="8" y="60" fill="#e8973c" font-size="9" font-family="monospace">FILM 400</text></svg>
+        <div class="tn">底片框</div>
+        <div class="td">135 膠卷風：齒孔＋橘字邊印＋張號</div>
+      </div>
     </div>
   </div>
 
@@ -146,6 +156,67 @@
           <label>參數列</label><input type="text" id="tParams" value="">
           <button class="dl" id="dS" disabled>下載 JPG（2160×3840）</button>
           <div class="hint" id="hS">相機・快門・光圈・ISO 從 EXIF 自動帶入，可直接改字。批次時每張用自己的 EXIF，標題共用。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 無縫輪播 ===== -->
+  <div class="view" id="v-carousel">
+    <div class="grid">
+      <div class="prevbox card" style="padding:10px">
+        <canvas id="cvC" class="prev" width="6480" height="2700" style="background:#fff"></canvas>
+        <div class="empty" id="cvCempty">選一張寬幅照片後這裡會出現預覽</div>
+      </div>
+      <div class="side">
+        <div class="card">
+          <h2>照片（建議 16:9 或全景）</h2>
+          <div class="slot" id="sC">點選或拖入照片</div>
+          <input type="file" id="fC" accept="image/jpeg,image/png">
+          <label>每張比例</label>
+          <div class="segs" id="cRatioSegs">
+            <span class="seg on" data-r="45">4:5（直式）</span>
+            <span class="seg" data-r="11">1:1（方形）</span>
+          </div>
+          <label>切成幾張</label>
+          <div class="segs" id="cNSegs">
+            <span class="seg on" data-n="0">自動</span>
+            <span class="seg" data-n="2">2</span>
+            <span class="seg" data-n="3">3</span>
+            <span class="seg" data-n="4">4</span>
+            <span class="seg" data-n="5">5</span>
+            <span class="seg" data-n="6">6</span>
+          </div>
+          <button class="dl" id="dC" disabled>下載輪播 JPG</button>
+          <div class="hint">預覽上拖動可調整構圖。虛線是切割位置（不會出現在成品）。下載會逐張輸出，發文時照編號順序上傳即可無縫接圖。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 底片框 ===== -->
+  <div class="view" id="v-film">
+    <div class="grid">
+      <div class="prevbox card" style="padding:10px">
+        <canvas id="cvF" class="prev" width="2160" height="3840" style="background:#0b0b0b"></canvas>
+        <div class="empty" id="cvFempty">選一張照片後這裡會出現預覽</div>
+      </div>
+      <div class="side">
+        <div class="card">
+          <h2>照片</h2>
+          <div class="slot" id="sF">點選或拖入照片</div>
+          <input type="file" id="fF" accept="image/jpeg,image/png">
+          <label>畫布尺寸</label>
+          <div class="segs" id="fSizeSegs">
+            <span class="seg on" data-w="1080" data-h="1920">1080×1920</span>
+            <span class="seg" data-w="1080" data-h="1350">4:5</span>
+            <span class="seg" data-w="1080" data-h="1080">1:1</span>
+          </div>
+          <label>底片名稱（橘色邊印）</label><input type="text" id="fName" value="we11Lin FILM 400">
+          <label>張號</label><input type="text" id="fFrame" value="">
+          <label>參數（橘色邊印）</label><input type="text" id="fParams" value="">
+          <button class="dl" id="dF" disabled>下載 JPG</button>
+          <div class="hint">張號自動取檔名數字、參數自動讀 EXIF，都可以改字。</div>
         </div>
       </div>
     </div>
@@ -296,6 +367,7 @@ function parseTiff(v){
           if(tag===0x829D) out.fnum=rational(g32(e+8));
           if(tag===0x8827) out.iso=(type===3)?g16(e+8):g32(e+8);
           if(tag===0x920A) out.focal=rational(g32(e+8));
+          if(tag===0x9003) out.dt=ascii(valOff,cnt);
           if(tag===0xA434) out.lens=ascii(valOff,cnt);
         }
       }
@@ -343,7 +415,56 @@ function wmSyncUI(){
     c.querySelector('.wmslot').classList.toggle('filled',!!wm.dataURL);
   });
 }
-function redrawAll(){ draw3(false); drawS(false); drawO(false); }
+function redrawAll(){ draw3(false); drawS(false); drawO(false); drawC(false); drawF(false); }
+
+/* ================= 復古日期章（全站共用） ================= */
+const ds = { on:false, corner:'br', size:26 };
+function fmtDsDate(ex){
+  if(!ex||!ex.dt) return '';
+  const m=ex.dt.match(/(\d{4}):(\d{2}):(\d{2})/); if(!m) return '';
+  return "'"+m[1].slice(2)+' '+(+m[2])+' '+(+m[3]);
+}
+function drawDateStamp(ctx, rect, ex){
+  if(!ds.on) return;
+  const t=fmtDsDate(ex); if(!t) return;
+  const k=ctx.canvas.width/2160;
+  const fs=ds.size*2*k;
+  ctx.save();
+  ctx.font='italic bold '+fs+'px "Courier New", monospace';
+  ctx.textBaseline='alphabetic';
+  const w=ctx.measureText(t).width;
+  const mx=Math.max(rect.w*0.04, fs*0.6), my=Math.max(rect.h*0.045, fs*0.9);
+  const x= ds.corner==='bl' ? rect.x+mx : rect.x+rect.w-mx-w;
+  const y= rect.y+rect.h-my+fs*0.35;
+  ctx.shadowColor='rgba(255,150,50,.9)'; ctx.shadowBlur=fs*0.4;
+  ctx.fillStyle='#FFA23E';
+  ctx.fillText(t,x,y);
+  ctx.restore();
+}
+const dsCards=[];
+function dsSave(){ store.save({ds:{on:ds.on,corner:ds.corner,size:ds.size}}); }
+function dsSyncUI(){
+  dsCards.forEach(c=>{
+    c.querySelector('.dstoggle').classList.toggle('on',ds.on);
+    c.querySelector('.dstoggle').textContent=ds.on?'開啟中':'已關閉';
+    c.querySelectorAll('.dscorner .seg').forEach(x=>x.classList.toggle('on',x.dataset.c===ds.corner));
+    c.querySelector('[data-ds=size]').value=ds.size;
+    c.querySelector('[data-dsv=size]').textContent=ds.size;
+  });
+}
+function buildDsCard(sideEl){
+  const card=document.createElement('div');
+  card.className='card';
+  card.innerHTML=`<div class="wmtop"><h2 style="margin:0">復古日期章（全版型共用）</h2><span class="wmtoggle dstoggle">已關閉</span></div>
+    <div class="wmrow" style="margin-top:10px"><label>位置</label><div class="segs dscorner"><span class="seg" data-c="bl">左下</span><span class="seg on" data-c="br">右下</span></div></div>
+    <div class="wmrow"><label>大小</label><input type="range" data-ds="size" min="14" max="46" value="26"><span class="val" data-dsv="size"></span></div>
+    <div class="hint" style="margin-top:8px">橘色數位相機風日期（例 '26 8 20），拍攝日期自動從 EXIF 讀取，無日期的照片不會顯示。</div>`;
+  card.querySelector('.dstoggle').addEventListener('click',()=>{ ds.on=!ds.on; dsSave(); dsSyncUI(); redrawAll(); });
+  card.querySelectorAll('.dscorner .seg').forEach(x=>x.addEventListener('click',()=>{ ds.corner=x.dataset.c; dsSave(); dsSyncUI(); redrawAll(); }));
+  card.querySelector('[data-ds=size]').addEventListener('input',e=>{ ds.size=+e.target.value; dsSave(); dsSyncUI(); redrawAll(); });
+  sideEl.appendChild(card);
+  dsCards.push(card);
+}
 async function wmSetFile(file){
   // 縮到最大 1200px 寬再存，控制 localStorage 大小
   const bmp=await loadScaled(file,1200,1200);
@@ -380,8 +501,8 @@ function buildWmCard(sideEl){
 }
 
 /* ================= 路由 ================= */
-const VIEWS=['home','three','story','shoton'];
-const TITLES={home:'照片排版工具',three:'三格排版',story:'EXIF 資訊框',shoton:'Shot on'};
+const VIEWS=['home','three','story','shoton','carousel','film'];
+const TITLES={home:'照片排版工具',three:'三格排版',story:'EXIF 資訊框',shoton:'Shot on',carousel:'無縫輪播',film:'底片框'};
 function go(v){
   VIEWS.forEach(x=>$('v-'+x).classList.toggle('on',x===v));
   $('btnBack').style.display = v==='home'?'none':'inline-block';
@@ -393,7 +514,7 @@ document.querySelectorAll('.tcard').forEach(c=>c.addEventListener('click',()=>go
 
 /* ================= 三格 ================= */
 const P3 = [ {x:32,y:84,w:2096,h:1180}, {x:32,y:1330,w:2096,h:1180}, {x:32,y:2576,w:2096,h:1178} ];
-const st3 = { imgs:[null,null,null], pan:[{x:0,y:0},{x:0,y:0},{x:0,y:0}], zoom:[1,1,1] };
+const st3 = { imgs:[null,null,null], pan:[{x:0,y:0},{x:0,y:0},{x:0,y:0}], zoom:[1,1,1], ex:[{},{},{}] };
 const cv3=$('cv3'), cx3=cv3.getContext('2d');
 $('n3').value = 'three-'+today();
 
@@ -413,6 +534,7 @@ function draw3(final){
     cx3.restore();
     if(final) sharpenRegion(cx3,p.x,p.y,p.w,p.h);
     if(wm.area==='photo') drawWatermark(cx3,{x:p.x,y:p.y,w:p.w,h:p.h});
+    drawDateStamp(cx3,{x:p.x,y:p.y,w:p.w,h:p.h},st3.ex[i]);
   });
   if(wm.area==='canvas') drawWatermark(cx3,{x:0,y:0,w:2160,h:3840});
   $('cv3empty').style.display=st3.imgs.some(Boolean)?'none':'flex';
@@ -422,6 +544,7 @@ async function set3(idx,file){
   const slot=$('s3-'+idx); slot.textContent='載入中…';
   st3.imgs[idx]=await loadScaled(file, 4600, 2600);
   st3.pan[idx]={x:0,y:0}; st3.zoom[idx]=1;
+  st3.ex[idx]=await readExif(file);
   slot.classList.add('filled');
   slot.innerHTML='<div class="nm">'+['① 上格','② 中格','③ 下格'][idx]+'　'+file.name+'</div><div class="meta">拖動移構圖・滾輪/雙指縮放・點此更換</div>';
   draw3(false);
@@ -481,7 +604,7 @@ const SS={ W:2160,H:3840, bg:'#DBDBDB', maxW:962*2, maxH:1150*2, centerY:1921,
   titleSize:43*2, lensSize:34*2, paramsSize:28*2,
   l2Above:12*2, lineGap:67*2, paramsBelow:37*2, titleX:55*2, lensRightX:1026*2,
   ink:'#121212', gray:'#6B6B6B' };
-const stS={ img:null, name:null, batch:[] };
+const stS={ img:null, name:null, batch:[], ex:{} };
 const cvS=$('cvS'), cxS=cvS.getContext('2d');
 
 function drawS(final){
@@ -496,6 +619,7 @@ function drawS(final){
   cxS.drawImage(im,px,py,pw,ph);
   if(final) sharpenRegion(cxS,px,py,pw,ph);
   drawWatermark(cxS,wmRect({x:px,y:py,w:pw,h:ph},cxS));
+  drawDateStamp(cxS,{x:px,y:py,w:pw,h:ph},stS.ex);
   cxS.textBaseline='alphabetic'; cxS.fillStyle=SS.ink;
   cxS.font=SS.titleSize+'px "Helvetica Neue", Arial, sans-serif';
   const l2y=py-SS.l2Above;
@@ -518,6 +642,7 @@ async function setS(file){
   stS.img=await loadScaled(file, SS.maxW, SS.maxH);
   stS.name=file.name.replace(/\.[^.]+$/,'');
   const ex=await readExif(file);
+  stS.ex=ex;
   if(ex.lens) $('tLens').value=shortenLens(ex.lens);
   $('tParams').value=storyParams(ex);
   $('sS').classList.add('filled');
@@ -571,6 +696,7 @@ function drawO(final){
   cxO.drawImage(im,px,py,pw,ph);
   if(final) sharpenRegion(cxO,px,py,pw,ph);
   drawWatermark(cxO,wmRect({x:px,y:py,w:pw,h:ph},cxO));
+  drawDateStamp(cxO,{x:px,y:py,w:pw,h:ph},stO.ex);
   // 文字
   const fs1=SO.line1Size*S*k, fs2=SO.line2Size*S*k;
   const l1y=py+ph+SO.line1Gap*S*k, l2y=l1y+SO.line2Gap*S*k;
@@ -645,12 +771,180 @@ $('dO').addEventListener('click',async()=>{
   drawO(false);
 });
 
+/* ================= 無縫輪播 ================= */
+const stC={ img:null, name:null, ratio:'45', n:0, pan:{x:0,y:0}, ex:{} };
+const cvC=$('cvC'), cxC=cvC.getContext('2d');
+function cLayout(){
+  const sw=2160, sh=stC.ratio==='11'?2160:2700;
+  let n=stC.n;
+  if(!n) n = stC.img ? Math.max(2,Math.min(6,Math.round((stC.img.width/stC.img.height)/(sw/sh)))) : 3;
+  return {sw,sh,n,W:sw*n,H:sh};
+}
+function drawC(final){
+  const {sw,sh,n,W,H}=cLayout();
+  if(cvC.width!==W||cvC.height!==H){ cvC.width=W; cvC.height=H; }
+  cxC.fillStyle='#ffffff'; cxC.fillRect(0,0,W,H);
+  if(!stC.img){ $('cvCempty').style.display='flex'; $('dC').disabled=true; return; }
+  $('cvCempty').style.display='none'; $('dC').disabled=false;
+  const im=stC.img;
+  const s=Math.max(W/im.width, H/im.height);
+  const dw=im.width*s, dh=im.height*s;
+  const maxX=(dw-W)/2, maxY=(dh-H)/2;
+  stC.pan.x=Math.max(-maxX,Math.min(maxX,stC.pan.x));
+  stC.pan.y=Math.max(-maxY,Math.min(maxY,stC.pan.y));
+  cxC.imageSmoothingQuality='high';
+  cxC.drawImage(im,(W-dw)/2+stC.pan.x,(H-dh)/2+stC.pan.y,dw,dh);
+  drawWatermark(cxC,{x:0,y:0,w:W,h:H});
+  drawDateStamp(cxC,{x:0,y:0,w:W,h:H},stC.ex);
+  if(!final){
+    cxC.save(); cxC.strokeStyle='rgba(255,255,255,.9)'; cxC.setLineDash([34,26]); cxC.lineWidth=7;
+    for(let i=1;i<n;i++){ cxC.beginPath(); cxC.moveTo(i*sw,0); cxC.lineTo(i*sw,H); cxC.stroke(); }
+    cxC.restore();
+  }
+}
+bindDrop($('sC'), $('fC'), fs=>{ if(fs[0]) setC(fs[0]); });
+$('fC').addEventListener('change',e=>{ if(e.target.files[0]) setC(e.target.files[0]); $('fC').value=''; });
+async function setC(file){
+  $('sC').textContent='載入中…';
+  stC.img=await loadScaled(file, 12960, 5400);
+  stC.name=file.name.replace(/\.[^.]+$/,'');
+  stC.ex=await readExif(file);
+  stC.pan={x:0,y:0};
+  $('sC').classList.add('filled');
+  $('sC').innerHTML='<div class="nm">'+file.name+'</div><div class="meta">'+stC.img.width+'×'+stC.img.height+'・點此更換</div>';
+  drawC(false);
+}
+$('cRatioSegs').addEventListener('click',e=>{
+  const t=e.target.closest('.seg'); if(!t) return;
+  document.querySelectorAll('#cRatioSegs .seg').forEach(x=>x.classList.toggle('on',x===t));
+  stC.ratio=t.dataset.r; drawC(false);
+});
+$('cNSegs').addEventListener('click',e=>{
+  const t=e.target.closest('.seg'); if(!t) return;
+  document.querySelectorAll('#cNSegs .seg').forEach(x=>x.classList.toggle('on',x===t));
+  stC.n=+t.dataset.n; drawC(false);
+});
+let dragC=null;
+cvC.addEventListener('pointerdown',e=>{
+  if(!stC.img) return;
+  const r=cvC.getBoundingClientRect();
+  dragC={x0:e.clientX,y0:e.clientY,px:stC.pan.x,py:stC.pan.y,sx:cvC.width/r.width};
+  cvC.setPointerCapture(e.pointerId);
+});
+cvC.addEventListener('pointermove',e=>{
+  if(!dragC) return;
+  stC.pan={x:dragC.px+(e.clientX-dragC.x0)*dragC.sx, y:dragC.py+(e.clientY-dragC.y0)*dragC.sx};
+  drawC(false);
+});
+cvC.addEventListener('pointerup',()=>{dragC=null;});
+cvC.addEventListener('pointercancel',()=>{dragC=null;});
+$('dC').addEventListener('click',async()=>{
+  const {sw,sh,n}=cLayout();
+  drawC(true);
+  const tmp=document.createElement('canvas'); tmp.width=sw; tmp.height=sh;
+  const tx=tmp.getContext('2d');
+  for(let i=0;i<n;i++){
+    tx.fillStyle='#fff'; tx.fillRect(0,0,sw,sh);
+    tx.drawImage(cvC,-i*sw,0);
+    sharpenRegion(tx,0,0,sw,sh);
+    await download(tmp,(stC.name||'photo')+'-carousel-'+(i+1)+'of'+n+'.jpg');
+  }
+  drawC(false);
+});
+
+/* ================= 底片框 ================= */
+const SF={ bg:'#0b0b0b', hole:'#f2f0e8', orange:'#E8973C',
+           band:78, textBand:52, holeW:46, holeH:34, holeR:7, holePitch:88,
+           nameSize:27, frameSize:27, paramsSize:22 };
+const stF={ img:null, name:null, ex:{}, W:1080, H:1920 };
+const cvF=$('cvF'), cxF=cvF.getContext('2d');
+function drawF(final){
+  const S=2, W=stF.W*S, H=stF.H*S, k=stF.W/1080;
+  if(cvF.width!==W||cvF.height!==H){ cvF.width=W; cvF.height=H; }
+  cxF.fillStyle=SF.bg; cxF.fillRect(0,0,W,H);
+  if(!stF.img){ $('cvFempty').style.display='flex'; $('dF').disabled=true; return; }
+  $('cvFempty').style.display='none'; $('dF').disabled=false;
+  const im=stF.img;
+  const band=SF.band*S*k, textBand=SF.textBand*S*k;
+  const maxPH=H-2*band-2*textBand-40*S*k;
+  let sc=W/im.width;
+  if(im.height*sc>maxPH) sc=maxPH/im.height;
+  const pw=Math.round(im.width*sc), ph=Math.round(im.height*sc);
+  const px=Math.round((W-pw)/2);
+  const blockH=ph+2*band+2*textBand;
+  const blockTop=Math.round((H-blockH)/2);
+  const py=blockTop+textBand+band;
+  cxF.imageSmoothingQuality='high';
+  cxF.drawImage(im,px,py,pw,ph);
+  if(final) sharpenRegion(cxF,px,py,pw,ph);
+  // 齒孔（上下兩排，橫貫整個畫布）
+  const hw=SF.holeW*S*k, hh=SF.holeH*S*k, hr=SF.holeR*S*k, pitch=SF.holePitch*S*k;
+  cxF.fillStyle=SF.hole;
+  [blockTop+textBand+(band-hh)/2, py+ph+(band-hh)/2].forEach(hy=>{
+    for(let hx=(W%pitch)/2-pitch; hx<W; hx+=pitch){
+      cxF.beginPath();
+      cxF.roundRect(hx,hy,hw,hh,hr);
+      cxF.fill();
+    }
+  });
+  // 橘色邊印
+  try{ cxF.letterSpacing=(2*S*k)+'px'; }catch(e){}
+  cxF.fillStyle=SF.orange; cxF.textBaseline='alphabetic';
+  const topY=blockTop+textBand-14*S*k;
+  const botY=py+ph+band+textBand-16*S*k;
+  cxF.font='600 '+(SF.nameSize*S*k)+'px "Courier New", monospace';
+  cxF.fillText(($('fName').value||'').toUpperCase(), px+6*S*k, topY);
+  const fr=$('fFrame').value;
+  if(fr){
+    const frT='▸ '+fr;
+    const frW=cxF.measureText(frT).width;
+    cxF.fillText(frT, px+pw-frW-6*S*k, botY);
+  }
+  cxF.font='600 '+(SF.paramsSize*S*k)+'px "Courier New", monospace';
+  const pv=$('fParams').value;
+  if(pv) cxF.fillText(pv, px+6*S*k, botY);
+  try{ cxF.letterSpacing='0px'; }catch(e){}
+  drawWatermark(cxF,{x:px,y:py,w:pw,h:ph});
+  drawDateStamp(cxF,{x:px,y:py,w:pw,h:ph},stF.ex);
+}
+bindDrop($('sF'), $('fF'), fs=>{ if(fs[0]) setF(fs[0]); });
+$('fF').addEventListener('change',e=>{ if(e.target.files[0]) setF(e.target.files[0]); $('fF').value=''; });
+async function setF(file){
+  $('sF').textContent='載入中…';
+  stF.img=await loadScaled(file, 2160, 3000);
+  stF.name=file.name.replace(/\.[^.]+$/,'');
+  stF.ex=await readExif(file);
+  const digits=(file.name.match(/\d+/g)||[]).pop()||'';
+  $('fFrame').value=digits;
+  $('fParams').value=soParams(stF.ex);
+  $('sF').classList.add('filled');
+  $('sF').innerHTML='<div class="nm">'+file.name+'</div><div class="meta">'+($('fParams').value||'無 EXIF')+'・點此更換</div>';
+  drawF(false);
+}
+$('fSizeSegs').addEventListener('click',e=>{
+  const t=e.target.closest('.seg'); if(!t) return;
+  document.querySelectorAll('#fSizeSegs .seg').forEach(x=>x.classList.toggle('on',x===t));
+  stF.W=+t.dataset.w; stF.H=+t.dataset.h; drawF(false);
+  store.save({film:{W:stF.W,H:stF.H}});
+});
+['fName','fFrame','fParams'].forEach(id=>$(id).addEventListener('input',()=>{drawF(false); if(id==='fName') store.save({film:{W:stF.W,H:stF.H,name:$('fName').value}});}));
+$('dF').addEventListener('click',async()=>{
+  drawF(true);
+  await download(cvF,(stF.name||'photo')+'-film-'+stF.W+'x'+stF.H+'.jpg');
+  drawF(false);
+});
+
 /* ================= 啟動：載入記住的設定 ================= */
 (async function init(){
   const s=store.load();
   if(s.story&&s.story.l1) $('tL1').value=s.story.l1;
-  // 浮水印卡片注入每個版型頁 + 載入記住的浮水印
-  document.querySelectorAll('#v-three .side, #v-story .side, #v-shoton .side').forEach(el=>buildWmCard(el));
+  // 浮水印＋日期章卡片注入每個版型頁 + 載入記住的設定
+  document.querySelectorAll('#v-three .side, #v-story .side, #v-shoton .side, #v-carousel .side, #v-film .side').forEach(el=>{buildWmCard(el); buildDsCard(el);});
+  if(s.ds){ Object.assign(ds,{on:!!s.ds.on,corner:s.ds.corner||'br',size:s.ds.size||26}); }
+  if(s.film){ if(s.film.name) $('fName').value=s.film.name;
+    if(s.film.W){ stF.W=s.film.W; stF.H=s.film.H;
+      document.querySelectorAll('#fSizeSegs .seg').forEach(x=>x.classList.toggle('on',+x.dataset.w===stF.W&&+x.dataset.h===stF.H)); } }
+  dsSyncUI();
   if(s.wm){
     Object.assign(wm,{on:s.wm.on,anchor:s.wm.anchor??8,dx:s.wm.dx??0,dy:s.wm.dy??0,scale:s.wm.scale??18,opacity:s.wm.opacity??90,area:s.wm.area||'photo',dataURL:s.wm.dataURL||null});
     if(wm.dataURL){
@@ -670,7 +964,7 @@ $('dO').addEventListener('click',async()=>{
       document.querySelectorAll('#sizeSegs .seg').forEach(x=>{if(x.dataset.w!=='0')x.classList.remove('on');});
       $('customSize').style.display='flex'; $('cw').value=stO.W; $('chh').value=stO.H; }
   }
-  draw3(false); drawS(false); drawO(false);
+  redrawAll();
 })();
 
 /* ===== 測試掛勾 ===== */
