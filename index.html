@@ -35,7 +35,25 @@
   .tcard .td { font-size: 12.5px; color: var(--sub); }
   /* 版型頁 */
   .grid { display: grid; grid-template-columns: 1fr 340px; gap: 16px; align-items: start; }
-  @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } .side { order: -1; } }
+  @media (max-width: 760px) {
+    body { padding: max(10px, env(safe-area-inset-top)) 10px 30px; }
+    .grid { display: block; }
+    .side { margin-top: 10px; }
+    .grid .prevbox { position: sticky; top: 0; z-index: 20; padding: 8px !important;
+               box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+    .prev { width: auto; max-width: 100%; max-height: 40vh; margin: 0 auto; }
+    .gallery { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .seg { padding: 10px 13px; font-size: 14px; }
+    .wmrow input[type=range] { height: 30px; }
+    .slot { padding: 14px 12px; }
+    button.dl { padding: 15px 0; }
+  }
+  details.card > summary { list-style: none; cursor: pointer; display: flex; align-items: center;
+    justify-content: space-between; gap: 10px; user-select: none; }
+  details.card > summary::-webkit-details-marker { display: none; }
+  details.card > summary h2 { margin: 0; }
+  details.card > summary .chev { color: var(--sub); font-size: 12px; transition: transform .15s; }
+  details.card[open] > summary .chev { transform: rotate(90deg); }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
   .card + .card { margin-top: 12px; }
   .card h2 { font-size: 13px; font-weight: 700; color: var(--sub); letter-spacing: .08em; margin-bottom: 10px; }
@@ -453,13 +471,14 @@ function dsSyncUI(){
   });
 }
 function buildDsCard(sideEl){
-  const card=document.createElement('div');
+  const card=document.createElement('details');
   card.className='card';
-  card.innerHTML=`<div class="wmtop"><h2 style="margin:0">復古日期章（全版型共用）</h2><span class="wmtoggle dstoggle">已關閉</span></div>
+  card.open = window.innerWidth>760;
+  card.innerHTML=`<summary><h2>復古日期章（全版型共用）</h2><span style="display:flex;align-items:center;gap:8px"><span class="wmtoggle dstoggle">已關閉</span><span class="chev">▶</span></span></summary>
     <div class="wmrow" style="margin-top:10px"><label>位置</label><div class="segs dscorner"><span class="seg" data-c="bl">左下</span><span class="seg on" data-c="br">右下</span></div></div>
     <div class="wmrow"><label>大小</label><input type="range" data-ds="size" min="14" max="46" value="26"><span class="val" data-dsv="size"></span></div>
     <div class="hint" style="margin-top:8px">橘色數位相機風日期（例 '26 8 20），拍攝日期自動從 EXIF 讀取，無日期的照片不會顯示。</div>`;
-  card.querySelector('.dstoggle').addEventListener('click',()=>{ ds.on=!ds.on; dsSave(); dsSyncUI(); redrawAll(); });
+  card.querySelector('.dstoggle').addEventListener('click',e=>{ e.preventDefault(); e.stopPropagation(); ds.on=!ds.on; dsSave(); dsSyncUI(); redrawAll(); });
   card.querySelectorAll('.dscorner .seg').forEach(x=>x.addEventListener('click',()=>{ ds.corner=x.dataset.c; dsSave(); dsSyncUI(); redrawAll(); }));
   card.querySelector('[data-ds=size]').addEventListener('input',e=>{ ds.size=+e.target.value; dsSave(); dsSyncUI(); redrawAll(); });
   sideEl.appendChild(card);
@@ -476,9 +495,10 @@ async function wmSetFile(file){
   wmSyncUI(); redrawAll();
 }
 function buildWmCard(sideEl){
-  const card=document.createElement('div');
+  const card=document.createElement('details');
   card.className='card';
-  card.innerHTML=`<div class="wmtop"><h2 style="margin:0">浮水印（全版型共用）</h2><span class="wmtoggle">已關閉</span></div>
+  card.open = window.innerWidth>760;
+  card.innerHTML=`<summary><h2>浮水印（全版型共用）</h2><span style="display:flex;align-items:center;gap:8px"><span class="wmtoggle">已關閉</span><span class="chev">▶</span></span></summary>
     <div class="slot wmslot" style="margin-top:10px">點選上傳浮水印（建議透明背景 PNG）</div>
     <div class="wmrow" style="margin-top:12px"><label>範圍</label><div class="segs wmarea"><span class="seg on" data-a="photo">照片內</span><span class="seg" data-a="canvas">整個版面</span></div></div>
     <div class="wmrow"><label>位置</label><div class="wmgrid">${'<div class="g"></div>'.repeat(9)}</div></div>
@@ -488,7 +508,7 @@ function buildWmCard(sideEl){
     <div class="wmrow"><label>垂直微調</label><input type="range" data-wm="dy" min="-20" max="20" value="0"><span class="val" data-wmv="dy"></span></div>`;
   const fi=document.createElement('input'); fi.type='file'; fi.accept='image/png,image/jpeg,image/webp'; fi.style.display='none';
   card.appendChild(fi);
-  card.querySelector('.wmtoggle').addEventListener('click',()=>{ wm.on=!wm.on; wmSave(); wmSyncUI(); redrawAll(); });
+  card.querySelector('.wmtoggle').addEventListener('click',e=>{ e.preventDefault(); e.stopPropagation(); wm.on=!wm.on; wmSave(); wmSyncUI(); redrawAll(); });
   bindDrop(card.querySelector('.wmslot'), fi, fs=>{ if(fs[0]) wmSetFile(fs[0]); });
   fi.addEventListener('change',e=>{ if(e.target.files[0]) wmSetFile(e.target.files[0]); fi.value=''; });
   card.querySelectorAll('.wmgrid .g').forEach((g,i)=>g.addEventListener('click',()=>{ wm.anchor=i; wmSave(); wmSyncUI(); redrawAll(); }));
