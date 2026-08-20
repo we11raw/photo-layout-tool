@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>照片排版工具</title>
+<style>
+  :root {
+    --bg: #f4f4f5; --card: #ffffff; --ink: #18181b; --sub: #71717a;
+    --line: #e4e4e7; --accent: #18181b; --accent-ink: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #121214; --card: #1c1c1f; --ink: #f4f4f5; --sub: #a1a1aa;
+            --line: #2c2c30; --accent: #f4f4f5; --accent-ink: #18181b; }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { background: var(--bg); color: var(--ink);
+         font: 15px/1.6 -apple-system, "PingFang TC", "Helvetica Neue", sans-serif;
+         padding: max(16px, env(safe-area-inset-top)) 16px 40px; }
+  .wrap { max-width: 960px; margin: 0 auto; }
+  header { display: flex; align-items: center; gap: 10px; padding: 4px 0 16px; }
+  h1 { font-size: 20px; font-weight: 700; letter-spacing: .02em; }
+  h1 small { color: var(--sub); font-weight: 400; font-size: 13px; margin-left: 8px; }
+  .back { display: none; border: 1px solid var(--line); background: var(--card); color: var(--ink);
+          border-radius: 8px; padding: 6px 12px; font-size: 14px; cursor: pointer; font-family: inherit; }
+  .view { display: none; }
+  .view.on { display: block; }
+  /* 首頁圖庫 */
+  .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+  .tcard { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px;
+           cursor: pointer; transition: transform .12s, border-color .12s; }
+  .tcard:hover { transform: translateY(-2px); border-color: var(--sub); }
+  .tcard svg { width: 100%; border-radius: 8px; display: block; background: #fff; }
+  .tcard .tn { font-weight: 700; margin-top: 10px; }
+  .tcard .td { font-size: 12.5px; color: var(--sub); }
+  /* 版型頁 */
+  .grid { display: grid; grid-template-columns: 1fr 340px; gap: 16px; align-items: start; }
+  @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } .side { order: -1; } }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+  .card + .card { margin-top: 12px; }
+  .card h2 { font-size: 13px; font-weight: 700; color: var(--sub); letter-spacing: .08em; margin-bottom: 10px; }
+  .slot { border: 1.5px dashed var(--line); border-radius: 10px; padding: 12px; text-align: center;
+          color: var(--sub); font-size: 14px; cursor: pointer; position: relative; overflow: hidden; }
+  .slot + .slot { margin-top: 8px; }
+  .slot.filled { border-style: solid; color: var(--ink); text-align: left; padding: 8px 12px; }
+  .slot.drag { border-color: var(--accent); }
+  .slot .nm { font-weight: 600; font-size: 13px; word-break: break-all; }
+  .slot .meta { font-size: 12px; color: var(--sub); }
+  label { display: block; font-size: 12px; color: var(--sub); margin: 10px 0 4px; }
+  input[type=text], input[type=number] { width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px;
+          background: var(--bg); color: var(--ink); font-size: 14px; font-family: inherit; }
+  input[type=file] { display: none; }
+  .row { display: flex; gap: 8px; }
+  .row > * { flex: 1; }
+  .segs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .seg { padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg);
+         font-size: 12.5px; cursor: pointer; color: var(--sub); user-select: none; }
+  .seg.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+  .wmgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; width: 96px; }
+  .wmgrid .g { aspect-ratio: 1; border: 1px solid var(--line); border-radius: 5px; background: var(--bg); cursor: pointer; }
+  .wmgrid .g.on { background: var(--accent); border-color: var(--accent); }
+  .wmrow { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+  .wmrow label { margin: 0; flex: 0 0 56px; }
+  .wmrow input[type=range] { flex: 1; accent-color: var(--accent); }
+  .wmrow .val { flex: 0 0 40px; text-align: right; font-size: 12px; color: var(--sub); }
+  .wmtop { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .wmtoggle { font-size: 12.5px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line);
+              background: var(--bg); color: var(--sub); cursor: pointer; user-select: none; }
+  .wmtoggle.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+  button.dl { width: 100%; margin-top: 14px; padding: 13px 0; border: none; border-radius: 10px;
+          background: var(--accent); color: var(--accent-ink); font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  button.dl:disabled { opacity: .35; cursor: default; }
+  .hint { font-size: 12px; color: var(--sub); margin-top: 10px; }
+  .prev { width: 100%; border-radius: 10px; border: 1px solid var(--line); display: block; background: #fff; touch-action: none; }
+  .prevbox { position: relative; }
+  .empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+           color: var(--sub); font-size: 14px; pointer-events: none; text-align: center; padding: 20px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <button class="back" id="btnBack">← 版型</button>
+    <h1 id="pageTitle">照片排版工具 <small>we11Lin · 照片不離開你的裝置</small></h1>
+  </header>
+
+  <!-- ===== 首頁：版型圖庫 ===== -->
+  <div class="view on" id="v-home">
+    <div class="gallery">
+      <div class="tcard" data-go="three">
+        <svg viewBox="0 0 120 213"><rect width="120" height="213" fill="#fff"/><rect x="4" y="8" width="112" height="60" fill="#9db89d"/><rect x="4" y="76" width="112" height="60" fill="#b8a58f"/><rect x="4" y="145" width="112" height="60" fill="#8fa3b8"/></svg>
+        <div class="tn">三格排版</div>
+        <div class="td">三張 16:9 白底直式，PSD 模板同規格</div>
+      </div>
+      <div class="tcard" data-go="story">
+        <svg viewBox="0 0 120 213"><rect width="120" height="213" fill="#DBDBDB"/><rect x="10" y="35" width="18" height="3" fill="#333"/><rect x="10" y="42" width="26" height="3" fill="#333"/><rect x="86" y="42" width="24" height="2.5" fill="#333"/><rect x="10" y="48" width="100" height="66" fill="#8fae8f"/><rect x="42" y="120" width="36" height="2.5" fill="#888"/></svg>
+        <div class="tn">EXIF 資訊框</div>
+        <div class="td">灰底＋地點鳥名＋鏡頭＋參數列</div>
+      </div>
+      <div class="tcard" data-go="shoton">
+        <svg viewBox="0 0 120 213"><rect width="120" height="213" fill="#fff"/><rect x="4" y="40" width="112" height="100" fill="#9fb3c8"/><rect x="38" y="150" width="44" height="3.5" fill="#222"/><rect x="46" y="158" width="28" height="2.5" fill="#999"/></svg>
+        <div class="tn">Shot on</div>
+        <div class="td">白底＋Shot on 型號＋焦段光圈快門 ISO</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 三格 ===== -->
+  <div class="view" id="v-three">
+    <div class="grid">
+      <div class="prevbox card" style="padding:10px">
+        <canvas id="cv3" class="prev" width="2160" height="3840"></canvas>
+        <div class="empty" id="cv3empty">選三張照片後這裡會出現預覽</div>
+      </div>
+      <div class="side">
+        <div class="card">
+          <h2>照片（上・中・下）</h2>
+          <div class="slot" id="s3-0">① 上格：點選或拖入照片</div>
+          <div class="slot" id="s3-1">② 中格：點選或拖入照片</div>
+          <div class="slot" id="s3-2">③ 下格：點選或拖入照片</div>
+          <input type="file" id="f3" accept="image/jpeg,image/png" multiple>
+          <div class="hint">預覽上：拖動＝移動構圖，滾輪或雙指＝縮放該格。一次選 3 張會依序放入。</div>
+          <label>輸出檔名</label>
+          <input type="text" id="n3" value="">
+          <button class="dl" id="d3" disabled>下載 JPG（2160×3840）</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 資訊框 ===== -->
+  <div class="view" id="v-story">
+    <div class="grid">
+      <div class="prevbox card" style="padding:10px">
+        <canvas id="cvS" class="prev" width="2160" height="3840"></canvas>
+        <div class="empty" id="cvSempty">選一張照片後這裡會出現預覽</div>
+      </div>
+      <div class="side">
+        <div class="card">
+          <h2>照片</h2>
+          <div class="slot" id="sS">點選或拖入照片（可多張批次）</div>
+          <input type="file" id="fS" accept="image/jpeg,image/png" multiple>
+          <label>標題第一行</label><input type="text" id="tL1" value="Taiwan">
+          <label>標題第二行（鳥名／主題）</label><input type="text" id="tL2" value="" placeholder="例如 Black Kite">
+          <label>鏡頭</label><input type="text" id="tLens" value="">
+          <label>參數列</label><input type="text" id="tParams" value="">
+          <button class="dl" id="dS" disabled>下載 JPG（2160×3840）</button>
+          <div class="hint" id="hS">相機・快門・光圈・ISO 從 EXIF 自動帶入，可直接改字。批次時每張用自己的 EXIF，標題共用。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Shot on ===== -->
+  <div class="view" id="v-shoton">
+    <div class="grid">
+      <div class="prevbox card" style="padding:10px">
+        <canvas id="cvO" class="prev" width="2160" height="3840"></canvas>
+        <div class="empty" id="cvOempty">選一張照片後這裡會出現預覽</div>
+      </div>
+      <div class="side">
+        <div class="card">
+          <h2>照片</h2>
+          <div class="slot" id="sO">點選或拖入照片（可多張批次）</div>
+          <input type="file" id="fO" accept="image/jpeg,image/png" multiple>
+          <label>畫布尺寸</label>
+          <div class="segs" id="sizeSegs">
+            <span class="seg on" data-w="1080" data-h="1920">1080×1920</span>
+            <span class="seg" data-w="1080" data-h="1350">4:5</span>
+            <span class="seg" data-w="1080" data-h="1080">1:1</span>
+            <span class="seg" data-w="0" data-h="0">自訂</span>
+          </div>
+          <div class="row" id="customSize" style="display:none;margin-top:8px">
+            <input type="number" id="cw" placeholder="寬" value="1080" min="200" max="4000">
+            <input type="number" id="chh" placeholder="高" value="1920" min="200" max="4000">
+          </div>
+          <label>相機型號顯示</label>
+          <div class="segs" id="modelSegs">
+            <span class="seg on" data-m="raw">原樣（ILCE-7M4）</span>
+            <span class="seg" data-m="nice">轉換（A7 IV）</span>
+          </div>
+          <label>Shot on 行（型號會粗體）</label>
+          <div class="row">
+            <input type="text" id="oModel" placeholder="型號" style="flex:2">
+            <input type="text" id="oBrand" placeholder="品牌" style="flex:1">
+          </div>
+          <label>參數行</label><input type="text" id="oParams" value="">
+          <button class="dl" id="dO" disabled>下載 JPG</button>
+          <div class="hint">焦段・光圈・快門・ISO・品牌 從 EXIF 自動帶入。批次時每張用自己的 EXIF。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ================= 共用 ================= */
+const $ = id => document.getElementById(id);
+const CAMERA_MAP = { 'ILCE-1M2':'Sony A1 II','ILCE-1':'Sony A1','ILCE-7M4':'Sony A7 IV',
+                     'ILME-FX30':'Sony FX30','X100VI':'Fujifilm X100VI' };
+const NICE_MODEL = { 'ILCE-1M2':'A1 II','ILCE-1':'A1','ILCE-7M4':'A7 IV','ILME-FX30':'FX30','X100VI':'X100VI' };
+function shortenLens(s){ return s.replace(' + 1.4X Teleconverter',' +1.4TC')
+                                 .replace(' + 2.0X Teleconverter',' +2TC')
+                                 .replace(' + 2X Teleconverter',' +2TC'); }
+function fmtShutter(v){ if(!v||v<=0) return ''; return v<1 ? '1/'+Math.round(1/v) : (+v.toFixed(1))+'s'; }
+function today(){ const d=new Date(),p=n=>String(n).padStart(2,'0');
+  return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes()); }
+const store = {
+  load(){ try{ return JSON.parse(localStorage.getItem('plt')||'{}'); }catch(e){ return {}; } },
+  save(patch){ const s=Object.assign(store.load(),patch); localStorage.setItem('plt',JSON.stringify(s)); }
+};
+async function loadScaled(file, maxW, maxH){
+  const bmp0 = await createImageBitmap(file);
+  const s = Math.min(maxW/bmp0.width, maxH/bmp0.height, 1);
+  const tw = Math.round(bmp0.width*s), th = Math.round(bmp0.height*s);
+  try {
+    const bmp = await createImageBitmap(file, {resizeWidth:tw, resizeHeight:th, resizeQuality:'high'});
+    bmp0.close(); return bmp;
+  } catch(e) {
+    let cw=bmp0.width, ch=bmp0.height, cur=bmp0;
+    while(cw/2 > tw){
+      cw=Math.round(cw/2); ch=Math.round(ch/2);
+      const c=document.createElement('canvas'); c.width=cw; c.height=ch;
+      const x=c.getContext('2d'); x.imageSmoothingQuality='high'; x.drawImage(cur,0,0,cw,ch); cur=c;
+    }
+    const c=document.createElement('canvas'); c.width=tw; c.height=th;
+    const x=c.getContext('2d'); x.imageSmoothingQuality='high'; x.drawImage(cur,0,0,tw,th);
+    return c;
+  }
+}
+function sharpenRegion(ctx,x,y,w,h,k){
+  k = k ?? 0.14;
+  x=Math.max(0,Math.round(x)); y=Math.max(0,Math.round(y)); w=Math.round(w); h=Math.round(h);
+  const cw=ctx.canvas.width, chh=ctx.canvas.height;
+  if(x+w>cw) w=cw-x; if(y+h>chh) h=chh-y; if(w<3||h<3) return;
+  const img=ctx.getImageData(x,y,w,h), src=img.data, out=new Uint8ClampedArray(src);
+  const c=1+4*k;
+  for(let j=1;j<h-1;j++) for(let i=1;i<w-1;i++){
+    const p=(j*w+i)*4;
+    for(let ch2=0;ch2<3;ch2++)
+      out[p+ch2]=c*src[p+ch2]-k*(src[p-4+ch2]+src[p+4+ch2]+src[p-w*4+ch2]+src[p+w*4+ch2]);
+  }
+  img.data.set(out); ctx.putImageData(img,x,y);
+}
+function download(canvas,name){
+  return new Promise(res=>canvas.toBlob(b=>{
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(b); a.download=name;
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();res();},600);
+  },'image/jpeg',1.0));
+}
+function bindDrop(el, input, onFiles){
+  el.addEventListener('click',()=>input.click());
+  el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('drag');});
+  el.addEventListener('dragleave',()=>el.classList.remove('drag'));
+  el.addEventListener('drop',e=>{e.preventDefault();el.classList.remove('drag');
+    onFiles([...e.dataTransfer.files].filter(f=>/image\/(jpeg|png)/.test(f.type)));});
+}
+
+/* ================= EXIF（JPEG） ================= */
+async function readExif(file){
+  const buf=await file.slice(0,256*1024).arrayBuffer(); const v=new DataView(buf);
+  if(v.getUint16(0)!==0xFFD8) return {};
+  let off=2;
+  while(off+4<v.byteLength){
+    const marker=v.getUint16(off); const len=v.getUint16(off+2);
+    if(marker===0xFFE1 && v.getUint32(off+4)===0x45786966)
+      return parseTiff(new DataView(buf, off+10, len-8));
+    if((marker&0xFF00)!==0xFF00) break;
+    off+=2+len;
+  }
+  return {};
+}
+function parseTiff(v){
+  try{
+    const le = v.getUint16(0)===0x4949;
+    const g16=o=>v.getUint16(o,le), g32=o=>v.getUint32(o,le);
+    const ascii=(o,n)=>{let s='';for(let i=0;i<n;i++){const c=v.getUint8(o+i);if(!c)break;s+=String.fromCharCode(c);}return s.trim();};
+    const rational=o=>{const n=g32(o),d=g32(o+4);return d?n/d:0;};
+    const out={};
+    function ifd(base, want){
+      const n=g16(base);
+      for(let i=0;i<n;i++){
+        const e=base+2+i*12, tag=g16(e), type=g16(e+2), cnt=g32(e+4);
+        const inline=(type===2&&cnt<=4)||(type===3&&cnt<=2)||(type===4&&cnt<=1);
+        const valOff = inline ? e+8 : g32(e+8);
+        if(want.ifd0){
+          if(tag===0x0110) out.model=ascii(valOff,cnt);
+          if(tag===0x010F) out.make=ascii(valOff,cnt);
+          if(tag===0x8769) out._exifIFD=g32(e+8);
+        }
+        if(want.exif){
+          if(tag===0x829A) out.exposure=rational(g32(e+8));
+          if(tag===0x829D) out.fnum=rational(g32(e+8));
+          if(tag===0x8827) out.iso=(type===3)?g16(e+8):g32(e+8);
+          if(tag===0x920A) out.focal=rational(g32(e+8));
+          if(tag===0xA434) out.lens=ascii(valOff,cnt);
+        }
+      }
+    }
+    ifd(g32(4),{ifd0:true});
+    if(out._exifIFD) ifd(out._exifIFD,{exif:true});
+    delete out._exifIFD;
+    return out;
+  }catch(e){ return {}; }
+}
+
+/* ================= 浮水印（全站共用，新版型只要呼叫 drawWatermark） ================= */
+const wm = { on:false, img:null, dataURL:null, anchor:8, dx:0, dy:0, scale:18, opacity:90, area:'photo' };
+function drawWatermark(ctx, rect){
+  if(!wm.on || !wm.img) return;
+  const margin=0.035;
+  const w=rect.w*wm.scale/100, h=w*wm.img.height/wm.img.width;
+  const col=wm.anchor%3, row=Math.floor(wm.anchor/3);
+  const fx=[margin,0.5,1-margin][col], fy=[margin,0.5,1-margin][row];
+  let x=rect.x + fx*rect.w - w*[0,0.5,1][col] + (wm.dx/100)*rect.w;
+  let y=rect.y + fy*rect.h - h*[0,0.5,1][row] + (wm.dy/100)*rect.h;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(rect.x,rect.y,rect.w,rect.h); ctx.clip();
+  ctx.globalAlpha=wm.opacity/100;
+  ctx.imageSmoothingQuality='high';
+  ctx.drawImage(wm.img,x,y,w,h);
+  ctx.restore();
+}
+const wmCards=[];
+function wmSave(){ store.save({wm:{on:wm.on,anchor:wm.anchor,dx:wm.dx,dy:wm.dy,scale:wm.scale,opacity:wm.opacity,area:wm.area,dataURL:wm.dataURL}}); }
+function wmRect(photoRect, ctx){ return wm.area==='canvas' ? {x:0,y:0,w:ctx.canvas.width,h:ctx.canvas.height} : photoRect; }
+function wmSyncUI(){
+  wmCards.forEach(c=>{
+    c.querySelector('.wmtoggle').classList.toggle('on',wm.on);
+    c.querySelector('.wmtoggle').textContent=wm.on?'開啟中':'已關閉';
+    c.querySelectorAll('.wmgrid .g').forEach((g,i)=>g.classList.toggle('on',i===wm.anchor));
+    c.querySelectorAll('.wmarea .seg').forEach(x=>x.classList.toggle('on',x.dataset.a===wm.area));
+    ['scale','opacity','dx','dy'].forEach(k=>{
+      c.querySelector('[data-wm='+k+']').value=wm[k];
+      c.querySelector('[data-wmv='+k+']').textContent=wm[k]+'%';
+    });
+    c.querySelector('.wmslot').innerHTML = wm.dataURL
+      ? '<div class="nm">已上傳浮水印</div><div class="meta">點此更換（建議透明背景 PNG）</div>'
+      : '點選上傳浮水印（建議透明背景 PNG）';
+    c.querySelector('.wmslot').classList.toggle('filled',!!wm.dataURL);
+  });
+}
+function redrawAll(){ draw3(false); drawS(false); drawO(false); }
+async function wmSetFile(file){
+  // 縮到最大 1200px 寬再存，控制 localStorage 大小
+  const bmp=await loadScaled(file,1200,1200);
+  const c=document.createElement('canvas'); c.width=bmp.width; c.height=bmp.height;
+  c.getContext('2d').drawImage(bmp,0,0);
+  wm.dataURL=c.toDataURL('image/png');
+  wm.img=bmp; wm.on=true;
+  try{ wmSave(); }catch(e){ /* 圖太大存不進 localStorage：本次可用，下次要重傳 */ }
+  wmSyncUI(); redrawAll();
+}
+function buildWmCard(sideEl){
+  const card=document.createElement('div');
+  card.className='card';
+  card.innerHTML=`<div class="wmtop"><h2 style="margin:0">浮水印（全版型共用）</h2><span class="wmtoggle">已關閉</span></div>
+    <div class="slot wmslot" style="margin-top:10px">點選上傳浮水印（建議透明背景 PNG）</div>
+    <div class="wmrow" style="margin-top:12px"><label>範圍</label><div class="segs wmarea"><span class="seg on" data-a="photo">照片內</span><span class="seg" data-a="canvas">整個版面</span></div></div>
+    <div class="wmrow"><label>位置</label><div class="wmgrid">${'<div class="g"></div>'.repeat(9)}</div></div>
+    <div class="wmrow"><label>大小</label><input type="range" data-wm="scale" min="4" max="60" value="18"><span class="val" data-wmv="scale"></span></div>
+    <div class="wmrow"><label>透明度</label><input type="range" data-wm="opacity" min="10" max="100" value="90"><span class="val" data-wmv="opacity"></span></div>
+    <div class="wmrow"><label>水平微調</label><input type="range" data-wm="dx" min="-20" max="20" value="0"><span class="val" data-wmv="dx"></span></div>
+    <div class="wmrow"><label>垂直微調</label><input type="range" data-wm="dy" min="-20" max="20" value="0"><span class="val" data-wmv="dy"></span></div>`;
+  const fi=document.createElement('input'); fi.type='file'; fi.accept='image/png,image/jpeg,image/webp'; fi.style.display='none';
+  card.appendChild(fi);
+  card.querySelector('.wmtoggle').addEventListener('click',()=>{ wm.on=!wm.on; wmSave(); wmSyncUI(); redrawAll(); });
+  bindDrop(card.querySelector('.wmslot'), fi, fs=>{ if(fs[0]) wmSetFile(fs[0]); });
+  fi.addEventListener('change',e=>{ if(e.target.files[0]) wmSetFile(e.target.files[0]); fi.value=''; });
+  card.querySelectorAll('.wmgrid .g').forEach((g,i)=>g.addEventListener('click',()=>{ wm.anchor=i; wmSave(); wmSyncUI(); redrawAll(); }));
+  card.querySelectorAll('.wmarea .seg').forEach(x=>x.addEventListener('click',()=>{ wm.area=x.dataset.a; wmSave(); wmSyncUI(); redrawAll(); }));
+  ['scale','opacity','dx','dy'].forEach(k=>{
+    card.querySelector('[data-wm='+k+']').addEventListener('input',e=>{ wm[k]=+e.target.value; wmSave(); wmSyncUI(); redrawAll(); });
+  });
+  sideEl.appendChild(card);
+  wmCards.push(card);
+}
+
+/* ================= 路由 ================= */
+const VIEWS=['home','three','story','shoton'];
+const TITLES={home:'照片排版工具',three:'三格排版',story:'EXIF 資訊框',shoton:'Shot on'};
+function go(v){
+  VIEWS.forEach(x=>$('v-'+x).classList.toggle('on',x===v));
+  $('btnBack').style.display = v==='home'?'none':'inline-block';
+  $('pageTitle').innerHTML = TITLES[v]+(v==='home'?' <small>we11Lin · 照片不離開你的裝置</small>':'');
+  if(v!=='home') store.save({lastView:v});
+}
+$('btnBack').addEventListener('click',()=>go('home'));
+document.querySelectorAll('.tcard').forEach(c=>c.addEventListener('click',()=>go(c.dataset.go)));
+
+/* ================= 三格 ================= */
+const P3 = [ {x:32,y:84,w:2096,h:1180}, {x:32,y:1330,w:2096,h:1180}, {x:32,y:2576,w:2096,h:1178} ];
+const st3 = { imgs:[null,null,null], pan:[{x:0,y:0},{x:0,y:0},{x:0,y:0}], zoom:[1,1,1] };
+const cv3=$('cv3'), cx3=cv3.getContext('2d');
+$('n3').value = 'three-'+today();
+
+function draw3(final){
+  cx3.fillStyle='#ffffff'; cx3.fillRect(0,0,2160,3840);
+  P3.forEach((p,i)=>{
+    const im=st3.imgs[i]; if(!im){ return; }
+    const cover=Math.max(p.w/im.width, p.h/im.height);
+    const s=cover*st3.zoom[i];
+    const dw=im.width*s, dh=im.height*s;
+    const maxX=(dw-p.w)/2, maxY=(dh-p.h)/2;
+    st3.pan[i].x=Math.max(-maxX,Math.min(maxX,st3.pan[i].x));
+    st3.pan[i].y=Math.max(-maxY,Math.min(maxY,st3.pan[i].y));
+    cx3.save(); cx3.beginPath(); cx3.rect(p.x,p.y,p.w,p.h); cx3.clip();
+    cx3.imageSmoothingQuality='high';
+    cx3.drawImage(im, p.x+(p.w-dw)/2+st3.pan[i].x, p.y+(p.h-dh)/2+st3.pan[i].y, dw, dh);
+    cx3.restore();
+    if(final) sharpenRegion(cx3,p.x,p.y,p.w,p.h);
+    if(wm.area==='photo') drawWatermark(cx3,{x:p.x,y:p.y,w:p.w,h:p.h});
+  });
+  if(wm.area==='canvas') drawWatermark(cx3,{x:0,y:0,w:2160,h:3840});
+  $('cv3empty').style.display=st3.imgs.some(Boolean)?'none':'flex';
+  $('d3').disabled=!(st3.imgs[0]&&st3.imgs[1]&&st3.imgs[2]);
+}
+async function set3(idx,file){
+  const slot=$('s3-'+idx); slot.textContent='載入中…';
+  st3.imgs[idx]=await loadScaled(file, 4600, 2600);
+  st3.pan[idx]={x:0,y:0}; st3.zoom[idx]=1;
+  slot.classList.add('filled');
+  slot.innerHTML='<div class="nm">'+['① 上格','② 中格','③ 下格'][idx]+'　'+file.name+'</div><div class="meta">拖動移構圖・滾輪/雙指縮放・點此更換</div>';
+  draw3(false);
+}
+let fill3Target=null;
+[0,1,2].forEach(i=>{ bindDrop($('s3-'+i), $('f3'), fs=>{ if(fs[0]){fill3Target=i;handle3(fs);} });
+                     $('s3-'+i).addEventListener('click',()=>{fill3Target=i;}); });
+$('f3').addEventListener('change',e=>handle3([...e.target.files]));
+async function handle3(files){
+  if(files.length>=3){ for(let i=0;i<3;i++) await set3(i,files[i]); }
+  else if(files.length){ const i=fill3Target ?? st3.imgs.findIndex(x=>!x); await set3(i<0?0:i,files[0]); }
+  fill3Target=null; $('f3').value='';
+}
+// 拖動 + 滾輪縮放 + 雙指縮放
+const ptrs=new Map(); let dragP=null, pinch=null;
+function panelAt(e){
+  const r=cv3.getBoundingClientRect(), sx=2160/r.width;
+  const x=(e.clientX-r.left)*sx, y=(e.clientY-r.top)*sx;
+  return {i:P3.findIndex(p=>x>=p.x&&x<=p.x+p.w&&y>=p.y&&y<=p.y+p.h), sx};
+}
+cv3.addEventListener('pointerdown',e=>{
+  ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  cv3.setPointerCapture(e.pointerId);
+  if(ptrs.size===1){
+    const {i,sx}=panelAt(e);
+    if(i>=0&&st3.imgs[i]) dragP={i,x0:e.clientX,y0:e.clientY,px:st3.pan[i].x,py:st3.pan[i].y,sx};
+  } else if(ptrs.size===2 && dragP){
+    const [a,b]=[...ptrs.values()];
+    pinch={i:dragP.i, d0:Math.hypot(a.x-b.x,a.y-b.y), z0:st3.zoom[dragP.i]}; dragP=null;
+  }
+});
+cv3.addEventListener('pointermove',e=>{
+  if(!ptrs.has(e.pointerId)) return;
+  ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pinch && ptrs.size>=2){
+    const [a,b]=[...ptrs.values()];
+    st3.zoom[pinch.i]=Math.max(1,Math.min(4,pinch.z0*Math.hypot(a.x-b.x,a.y-b.y)/pinch.d0));
+    draw3(false);
+  } else if(dragP){
+    st3.pan[dragP.i]={x:dragP.px+(e.clientX-dragP.x0)*dragP.sx, y:dragP.py+(e.clientY-dragP.y0)*dragP.sx};
+    draw3(false);
+  }
+});
+function ptrEnd(e){ ptrs.delete(e.pointerId); if(ptrs.size<2) pinch=null; if(ptrs.size===0) dragP=null; }
+cv3.addEventListener('pointerup',ptrEnd); cv3.addEventListener('pointercancel',ptrEnd);
+cv3.addEventListener('wheel',e=>{
+  const {i}=panelAt(e);
+  if(i<0||!st3.imgs[i]) return;
+  e.preventDefault();
+  st3.zoom[i]=Math.max(1,Math.min(4,st3.zoom[i]*(1-e.deltaY*0.0018)));
+  draw3(false);
+},{passive:false});
+$('d3').addEventListener('click',async()=>{ draw3(true); await download(cv3,($('n3').value||'three-'+today())+'.jpg'); draw3(false); });
+
+/* ================= 資訊框 ================= */
+const SS={ W:2160,H:3840, bg:'#DBDBDB', maxW:962*2, maxH:1150*2, centerY:1921,
+  titleSize:43*2, lensSize:34*2, paramsSize:28*2,
+  l2Above:12*2, lineGap:67*2, paramsBelow:37*2, titleX:55*2, lensRightX:1026*2,
+  ink:'#121212', gray:'#6B6B6B' };
+const stS={ img:null, name:null, batch:[] };
+const cvS=$('cvS'), cxS=cvS.getContext('2d');
+
+function drawS(final){
+  cxS.fillStyle=SS.bg; cxS.fillRect(0,0,SS.W,SS.H);
+  if(!stS.img){ $('cvSempty').style.display='flex'; $('dS').disabled=true; return; }
+  $('cvSempty').style.display='none'; $('dS').disabled=false;
+  const im=stS.img;
+  const s=Math.min(SS.maxW/im.width, SS.maxH/im.height);
+  const pw=Math.round(im.width*s), ph=Math.round(im.height*s);
+  const px=Math.round((SS.W-pw)/2), py=Math.round(SS.centerY-ph/2);
+  cxS.imageSmoothingQuality='high';
+  cxS.drawImage(im,px,py,pw,ph);
+  if(final) sharpenRegion(cxS,px,py,pw,ph);
+  drawWatermark(cxS,wmRect({x:px,y:py,w:pw,h:ph},cxS));
+  cxS.textBaseline='alphabetic'; cxS.fillStyle=SS.ink;
+  cxS.font=SS.titleSize+'px "Helvetica Neue", Arial, sans-serif';
+  const l2y=py-SS.l2Above;
+  cxS.fillText($('tL2').value, SS.titleX, l2y);
+  cxS.fillText($('tL1').value, SS.titleX, l2y-SS.lineGap);
+  cxS.font=SS.lensSize+'px "Helvetica Neue", Arial, sans-serif';
+  const lensW=cxS.measureText($('tLens').value).width;
+  cxS.fillText($('tLens').value, SS.lensRightX-lensW, l2y);
+  cxS.fillStyle=SS.gray;
+  cxS.font=SS.paramsSize+'px "Helvetica Neue", Arial, sans-serif';
+  const pv=$('tParams').value, pW=cxS.measureText(pv).width;
+  cxS.fillText(pv,(SS.W-pW)/2, py+ph+SS.paramsBelow);
+}
+function storyParams(ex){
+  const cam=CAMERA_MAP[ex.model]||ex.model||'';
+  return [cam, fmtShutter(ex.exposure), ex.fnum?('F'+(+ex.fnum.toFixed(1)*1)):'', ex.iso?('ISO '+ex.iso):''].filter(Boolean).join(' • ');
+}
+async function setS(file){
+  $('sS').textContent='載入中…';
+  stS.img=await loadScaled(file, SS.maxW, SS.maxH);
+  stS.name=file.name.replace(/\.[^.]+$/,'');
+  const ex=await readExif(file);
+  if(ex.lens) $('tLens').value=shortenLens(ex.lens);
+  $('tParams').value=storyParams(ex);
+  $('sS').classList.add('filled');
+  $('sS').innerHTML='<div class="nm">'+file.name+'</div><div class="meta">'+($('tParams').value||'無 EXIF，請手動填')+'・點此更換</div>';
+  drawS(false);
+}
+bindDrop($('sS'), $('fS'), fs=>handleS(fs));
+$('fS').addEventListener('change',e=>{handleS([...e.target.files]); $('fS').value='';});
+function handleS(files){
+  if(!files.length) return;
+  stS.batch=files;
+  if(files.length===1){ setS(files[0]); $('dS').textContent='下載 JPG（2160×3840）'; }
+  else { setS(files[0]); $('dS').textContent='批次輸出 '+files.length+' 張 JPG'; }
+}
+['tL1','tL2','tLens','tParams'].forEach(id=>$(id).addEventListener('input',()=>{drawS(false); store.save({story:{l1:$('tL1').value}});}));
+$('dS').addEventListener('click',async()=>{
+  if(stS.batch.length<=1){ drawS(true); await download(cvS,(stS.name||'photo')+'-story.jpg'); drawS(false); return; }
+  for(const f of stS.batch){ await setS(f); drawS(true); await download(cvS,f.name.replace(/\.[^.]+$/,'')+'-story.jpg'); }
+  drawS(false);
+});
+
+/* ================= Shot on ================= */
+// 版面（以 1080 寬為基準，×2 輸出；直式 1080×1920 時照片中心在 46.9% 高）
+const SO={ margin:30, line1Size:23, line2Size:17, line1Gap:44, line2Gap:32,
+           ink:'#111111', gray:'#8A8A8E', bg:'#ffffff' };
+const stO={ img:null, name:null, batch:[], ex:{}, W:1080, H:1920, modelMode: 'raw' };
+const cvO=$('cvO'), cxO=cvO.getContext('2d');
+
+function soLayout(){
+  const S=2, W=stO.W*S, H=stO.H*S;
+  const k=stO.W/1080;                       // 尺寸縮放係數（字級隨寬度縮放）
+  const maxW=W-SO.margin*2*S*k;
+  const captionH=(SO.line1Gap+SO.line2Gap+30)*S*k;  // 下方文字保留高度
+  const maxH=H-captionH-120*S*k;
+  return {S,W,H,k,maxW,maxH,captionH};
+}
+function drawO(final){
+  const {S,W,H,k,maxW,maxH}=soLayout();
+  if(cvO.width!==W||cvO.height!==H){ cvO.width=W; cvO.height=H; }
+  cxO.fillStyle=SO.bg; cxO.fillRect(0,0,W,H);
+  if(!stO.img){ $('cvOempty').style.display='flex'; $('dO').disabled=true; return; }
+  $('cvOempty').style.display='none'; $('dO').disabled=false;
+  const im=stO.img;
+  const s=Math.min(maxW/im.width, maxH/im.height);
+  const pw=Math.round(im.width*s), ph=Math.round(im.height*s);
+  const px=Math.round((W-pw)/2);
+  // 照片中心略高於畫布中心（Liit 感）：把整塊（照片＋字）置中
+  const blockH=ph+(SO.line1Gap+SO.line2Gap)*S*k;
+  const py=Math.round((H-blockH)/2);
+  cxO.imageSmoothingQuality='high';
+  cxO.drawImage(im,px,py,pw,ph);
+  if(final) sharpenRegion(cxO,px,py,pw,ph);
+  drawWatermark(cxO,wmRect({x:px,y:py,w:pw,h:ph},cxO));
+  // 文字
+  const fs1=SO.line1Size*S*k, fs2=SO.line2Size*S*k;
+  const l1y=py+ph+SO.line1Gap*S*k, l2y=l1y+SO.line2Gap*S*k;
+  cxO.textBaseline='alphabetic';
+  const model=$('oModel').value, brand=$('oBrand').value;
+  const segs=[['Shot on ',fs1+'px "Helvetica Neue", Arial',SO.gray],
+              [model, 'bold '+fs1+'px "Helvetica Neue", Arial', SO.ink],
+              [brand?' '+brand:'', fs1+'px "Helvetica Neue", Arial', SO.ink]];
+  let total=0;
+  segs.forEach(sg=>{cxO.font=sg[1];sg[3]=cxO.measureText(sg[0]).width;total+=sg[3];});
+  let x=(W-total)/2;
+  segs.forEach(sg=>{cxO.font=sg[1];cxO.fillStyle=sg[2];cxO.fillText(sg[0],x,l1y);x+=sg[3];});
+  cxO.fillStyle=SO.gray; cxO.font=fs2+'px "Helvetica Neue", Arial';
+  const p=$('oParams').value, pW2=cxO.measureText(p).width;
+  cxO.fillText(p,(W-pW2)/2,l2y);
+}
+function soParams(ex){
+  return [ex.focal?Math.round(ex.focal)+'mm':'', ex.fnum?('f/'+(+ex.fnum).toFixed(1)):'',
+          ex.exposure?fmtShutter(ex.exposure)+'s':'', ex.iso?('ISO'+ex.iso):''].filter(Boolean).join('  ');
+}
+function soApplyModel(){
+  const ex=stO.ex;
+  $('oModel').value = stO.modelMode==='nice' ? (NICE_MODEL[ex.model]||ex.model||'') : (ex.model||'');
+  $('oBrand').value = (ex.make||'').split(/\s+/)[0]||'';
+}
+async function setO(file){
+  $('sO').textContent='載入中…';
+  const {maxW,maxH}=soLayout();
+  stO.img=await loadScaled(file, Math.max(maxW,2200), Math.max(maxH,2200));
+  stO.name=file.name.replace(/\.[^.]+$/,'');
+  stO.ex=await readExif(file);
+  soApplyModel();
+  $('oParams').value=soParams(stO.ex);
+  $('sO').classList.add('filled');
+  $('sO').innerHTML='<div class="nm">'+file.name+'</div><div class="meta">'+($('oParams').value||'無 EXIF，請手動填')+'・點此更換</div>';
+  drawO(false);
+}
+bindDrop($('sO'), $('fO'), fs=>handleO(fs));
+$('fO').addEventListener('change',e=>{handleO([...e.target.files]); $('fO').value='';});
+function handleO(files){
+  if(!files.length) return;
+  stO.batch=files;
+  setO(files[0]);
+  $('dO').textContent = files.length>1 ? '批次輸出 '+files.length+' 張 JPG' : '下載 JPG';
+}
+$('sizeSegs').addEventListener('click',e=>{
+  const t=e.target.closest('.seg'); if(!t) return;
+  document.querySelectorAll('#sizeSegs .seg').forEach(x=>x.classList.toggle('on',x===t));
+  const custom=t.dataset.w==='0';
+  $('customSize').style.display=custom?'flex':'none';
+  if(!custom){ stO.W=+t.dataset.w; stO.H=+t.dataset.h; drawO(false); }
+  else applyCustom();
+  store.save({shoton:{W:stO.W,H:stO.H,mode:stO.modelMode}});
+});
+function applyCustom(){
+  stO.W=Math.max(200,Math.min(4000,+$('cw').value||1080));
+  stO.H=Math.max(200,Math.min(4000,+$('chh').value||1920));
+  drawO(false);
+}
+['cw','chh'].forEach(id=>$(id).addEventListener('input',()=>{applyCustom(); store.save({shoton:{W:stO.W,H:stO.H,mode:stO.modelMode}});}));
+$('modelSegs').addEventListener('click',e=>{
+  const t=e.target.closest('.seg'); if(!t) return;
+  document.querySelectorAll('#modelSegs .seg').forEach(x=>x.classList.toggle('on',x===t));
+  stO.modelMode=t.dataset.m; soApplyModel(); drawO(false);
+  store.save({shoton:{W:stO.W,H:stO.H,mode:stO.modelMode}});
+});
+['oModel','oBrand','oParams'].forEach(id=>$(id).addEventListener('input',()=>drawO(false)));
+$('dO').addEventListener('click',async()=>{
+  const name=n=>n+'-shoton-'+stO.W+'x'+stO.H+'.jpg';
+  if(stO.batch.length<=1){ drawO(true); await download(cvO,name(stO.name||'photo')); drawO(false); return; }
+  for(const f of stO.batch){ await setO(f); drawO(true); await download(cvO,name(f.name.replace(/\.[^.]+$/,''))); }
+  drawO(false);
+});
+
+/* ================= 啟動：載入記住的設定 ================= */
+(async function init(){
+  const s=store.load();
+  if(s.story&&s.story.l1) $('tL1').value=s.story.l1;
+  // 浮水印卡片注入每個版型頁 + 載入記住的浮水印
+  document.querySelectorAll('#v-three .side, #v-story .side, #v-shoton .side').forEach(el=>buildWmCard(el));
+  if(s.wm){
+    Object.assign(wm,{on:s.wm.on,anchor:s.wm.anchor??8,dx:s.wm.dx??0,dy:s.wm.dy??0,scale:s.wm.scale??18,opacity:s.wm.opacity??90,area:s.wm.area||'photo',dataURL:s.wm.dataURL||null});
+    if(wm.dataURL){
+      try{ wm.img=await createImageBitmap(await (await fetch(wm.dataURL)).blob()); }catch(e){ wm.dataURL=null; wm.on=false; }
+    } else wm.on=false;
+  }
+  wmSyncUI();
+  if(s.shoton){
+    stO.W=s.shoton.W||1080; stO.H=s.shoton.H||1920; stO.modelMode=s.shoton.mode||'raw';
+    document.querySelectorAll('#modelSegs .seg').forEach(x=>x.classList.toggle('on',x.dataset.m===stO.modelMode));
+    let matched=false;
+    document.querySelectorAll('#sizeSegs .seg').forEach(x=>{
+      const on = +x.dataset.w===stO.W && +x.dataset.h===stO.H;
+      x.classList.toggle('on',on); if(on) matched=true;
+    });
+    if(!matched){ document.querySelector('#sizeSegs .seg[data-w="0"]').classList.add('on');
+      document.querySelectorAll('#sizeSegs .seg').forEach(x=>{if(x.dataset.w!=='0')x.classList.remove('on');});
+      $('customSize').style.display='flex'; $('cw').value=stO.W; $('chh').value=stO.H; }
+  }
+  draw3(false); drawS(false); drawO(false);
+})();
+
+/* ===== 測試掛勾 ===== */
+if(location.search.includes('test=1')){
+  (async()=>{
+    const names=['DSC05894.JPG','DSC05923.JPG','DSC05984.JPG'];
+    const files=await Promise.all(names.map(async n=>new File([await (await fetch(n)).blob()],n,{type:'image/jpeg'})));
+    window.__testFiles=files;
+    window.__testReady=true;
+  })();
+}
+</script>
+</body>
+</html>
